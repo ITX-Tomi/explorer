@@ -129,7 +129,9 @@ export default {
   },
   created() {
     this.$http.getLatestBlock().then(res => {
-      this.blocks.push(res)
+      if (res.block.data.txs.length > 0) {
+        this.blocks.push(res)
+      }
       const list = []
       const { height } = res.block.header
       for (let i = 1; i < 10; i += 1) {
@@ -145,9 +147,11 @@ export default {
         promise = promise.then(() => new Promise(resolve => {
           this.$http.getBlockByHeight(item).then(b => {
             resolve()
-            this.blocks.push(b)
-            if (this.txs.length < 20) {
-              this.extractTx(b, 'tail')
+            if (this.txs.length > 0) {
+              this.blocks.push(b)
+              if (this.txs.length < 20) {
+                this.extractTx(b, 'tail')
+              }
             }
           })
         }))
@@ -169,7 +173,7 @@ export default {
     fetch() {
       this.$http.getLatestBlock().then(b => {
         const has = this.blocks.findIndex(x => x.block.header.height === b.block.header.height)
-        if (has < 0) {
+        if (has < 0 && b.block.data.txs.length > 0) {
           this.blocks.unshift(b)
           this.extractTx(b)
         }
